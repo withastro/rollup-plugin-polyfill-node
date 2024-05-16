@@ -24,6 +24,27 @@ rollup({
 })
 ```
 
+
+```js
+import nodePolyfills from 'rollup-plugin-polyfill-node';
+rollup({
+  entry: 'main.js',
+  plugins: [
+    nodePolyfills({
+      onPolyfill: (module) => {
+        const allowList = ['util']
+        const allow = allowList.includes(module)
+        if (allow === false) {
+          console.warn('module will be maintained as external import', module)
+        }
+        return allow
+      }
+    })
+  ]
+})
+```
+
+
 ## Options
 
 *All options are optional.*
@@ -32,6 +53,8 @@ rollup({
 - `exclude: Array<string | RegExp> | string | RegExp | null;`: Exclude files from transformation. 
 - `sourceMap: boolean`: True to get source maps, false otherwise.
 
+- `prefixExternals: boolean;`: If a polyfill is skipped using `onPolyfill` callback, include prefix `node:` on the module name, see `onPolyfill`
+- `onPolyfill: (module: string) => boolean;`: Default, allow all. Allow project to opt-out of one or more polyfills, skipped modules are preserved as `import "module"` or `import "node:module"`
 
 ## Node.js Builtin Support Table
 

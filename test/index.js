@@ -74,4 +74,26 @@ describe('rollup-plugin-node-polyfills', function() {
       done(err)
     });
   });
+
+  it('can exclude a polyfill', function(done) {
+    rollup.rollup({
+      input: 'test/examples/filter.js',
+      plugins: [
+        nodePolyfills({
+          include: null,
+          onPolyfill: function (module) {
+            // exclude the util module
+            return false;
+          }
+        })
+      ]
+    }).then(bundle => bundle.generate({format: 'esm'}))
+    .then(generated => {
+      if (generated.output[0].imports.includes('util')) {
+        done();
+      } else {
+        done(new Error('util module was not excluded'));
+      }
+    })
+  });
 })

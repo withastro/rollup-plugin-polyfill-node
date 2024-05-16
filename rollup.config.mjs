@@ -4,6 +4,7 @@ export default {
 	external: [
 		'path',
 		'crypto',
+		'module',
 		'@rollup/plugin-inject'
 	],
 	output: ['es','cjs'].map((format) => ({
