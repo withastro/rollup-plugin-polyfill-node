@@ -24,6 +24,27 @@ rollup({
 })
 ```
 
+
+```js
+import nodePolyfills from 'rollup-plugin-polyfill-node';
+rollup({
+  entry: 'main.js',
+  plugins: [
+    nodePolyfills({
+      onPolyfill: (module) => {
+        const allowList = ['util']
+        const allow = allowList.includes(module)
+        if (allow === false) {
+          console.warn('module will be maintained as external import', module)
+        }
+        return allow
+      }
+    })
+  ]
+})
+```
+
+
 ## Options
 
 *All options are optional.*
@@ -32,6 +53,8 @@ rollup({
 - `exclude: Array<string | RegExp> | string | RegExp | null;`: Exclude files from transformation. 
 - `sourceMap: boolean`: True to get source maps, false otherwise.
 
+- `prefixExternals: boolean;`: If a polyfill is skipped using `onPolyfill` callback, include prefix `node:` on the module name, see `onPolyfill`
+- `onPolyfill: (module: string, implementation: string | undefined) => boolean | string;`: Default, allow all. Allow project to opt-out or replace one or more polyfills, returning false sets modules to resolve as external (e.g. `import "module"` or `import "node:module"`), or return an alternative polyfill implementation as a string value, undefined `implementation` indicates that an empty shim is being used.
 
 ## Node.js Builtin Support Table
 
@@ -67,9 +90,9 @@ The following modules include ES6 specific version which allow you to do named i
 - readline∆
 - repl∆
 - tls∆
-- fs˚
-- crypto˚
-- perf_hooks˚ - **New:* just an empty shim for now, but would love help building a true polyfill!*
+- fs∆
+- crypto∆
+- perf_hooks∆ - **New:* just an empty shim for now, but would love help building a true polyfill!*
 
 
 † the http and https modules are actually the same and don't differentiate based on protocol
@@ -78,8 +101,8 @@ The following modules include ES6 specific version which allow you to do named i
 
 § vm does not have all corner cases and has less of them in a web worker
 
-∆ not shimmed, just returns mock
+∆ not shimmed, just returns mock (module, with no functions)
 
-˚ shimmed, but too complex to polyfill fully. Avoid if at all possible. Some bugs and partial support expected. 
+~~˚ shimmed, but too complex to polyfill fully. Avoid if at all possible. Some bugs and partial support expected. ~~
 
 Not all included modules rollup equally, streams (and by extension anything that requires it like http) are a mess of circular references that are pretty much impossible to tree-shake out, similarly url methods are actually a shortcut to a url object so those methods don't tree shake out very well, punycode, path, querystring, events, util, and process tree shake very well especially if you do named imports.
