@@ -1,5 +1,5 @@
 import POLYFILLS from './polyfills';
-const EMPTY_PATH = POLYFILLS['empty.js'];
+export const EMPTY_PATH = POLYFILLS['empty.js'];
 
 export function getModules() {
   const libs = new Map<string, string>();

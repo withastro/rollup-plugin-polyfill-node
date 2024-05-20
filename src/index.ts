@@ -1,11 +1,12 @@
 // @ts-ignore
 import type { Plugin } from "rollup";
-import inject, { Injectment, RollupInjectOptions } from "@rollup/plugin-inject";
+import inject, { type RollupInjectOptions } from "@rollup/plugin-inject";
 import { getModules } from "./modules";
 import { posix, resolve } from "path";
 import { randomBytes } from "crypto";
 import POLYFILLS from './polyfills';
 import { isBuiltin } from "module";
+import { createHasModule, type OnPolyfill } from "./has-module";
 
 // Node import paths use POSIX separators
 const { dirname, relative, join } = posix;
@@ -19,36 +20,22 @@ export interface NodePolyfillsOptions {
   include?: Array<string | RegExp> | string | RegExp | null;
   exclude?: Array<string | RegExp> | string | RegExp | null;
   
+  /**
+   * @deprecated, crypto flag behavior is not implemented
+   */
+  crypto?: boolean;
+  
   // If a polyfill is skipped, should the external module name be prefixed with `node:`?
   prefixExternals?: boolean; // default: false
 
-  // filtering of  which polyfills are applied, others remain external
-  onPolyfill?: (module: string) => boolean;  // default: () => true
+  // allow filtering or substitution of polyfills that are applied, returning false will result in dependency remaining external
+  // if defaultPolyfill is undefined, the polyfill returns an empty module
+  onPolyfill?: OnPolyfill;  // default: () => true
 }
 
 export default function (opts: NodePolyfillsOptions = {}): Plugin {
   const mods = getModules();
-  const onPolyfill = opts.onPolyfill ?? (() => true);
-  const onPolyfillCache = new Map<string, boolean>();
-  const hasModule = (module: string) => {
-    if (mods.has(module)) {
-      // some special cases, matching injected modules and underscored modules 
-      // are likely to need to be implemented as part of a previously added polyfill
-      if (module === 'buffer' || module === 'process' || module ==='global' || module.startsWith("_")) {
-        return true;
-      }
-      
-      // cache the result of shouldPolyfill, to make it easier for the user to
-      // keep track of what was actually polyfilled
-      if (onPolyfillCache.has(module)) {
-        return onPolyfillCache.get(module)!;
-      } else {
-        const result = onPolyfill(module);
-        onPolyfillCache.set(module, result);
-        return result;
-      }
-    }
-  };
+  const hasModule = createHasModule(mods, POLYFILLS, opts.onPolyfill);
 
   const injectPlugin = inject({
     include: opts.include === undefined ? ['node_modules/**/*.js'] : opts.include,
@@ -67,7 +54,7 @@ export default function (opts: NodePolyfillsOptions = {}): Plugin {
   return {
     name: "polyfill-node",
     resolveId(importee: string, importer?: string) {
-      // Fixes commonjs compatability: https://github.com/FredKSchott/rollup-plugin-polyfill-node/pull/42
+      // Fixes commonjs compatibility: https://github.com/FredKSchott/rollup-plugin-polyfill-node/pull/42
       if (importee[0] == '\0' && /\?commonjs-\w+$/.test(importee)) {
         importee = importee.slice(1).replace(/\?commonjs-\w+$/, '');
       }
@@ -103,7 +90,7 @@ export default function (opts: NodePolyfillsOptions = {}): Plugin {
       if (importee.startsWith(PREFIX)) {
         importee = importee.substr(PREFIX_LENGTH);
       }
-      if (hasModule(importee) || (POLYFILLS as any)[importee.replace('.js', '') + '.js']) {
+      if (hasModule(importee) || POLYFILLS[importee.replace('.js', '') + '.js']) {
         return { id: PREFIX + importee.replace('.js', '') + '.js', moduleSideEffects: false };
       }
       return null;
@@ -114,7 +101,7 @@ export default function (opts: NodePolyfillsOptions = {}): Plugin {
       }
       if (id.startsWith(PREFIX)) {
         const importee = id.substr(PREFIX_LENGTH).replace('.js', '');
-        return mods.get(importee) || (POLYFILLS as any)[importee + '.js'];
+        return mods.get(importee) || POLYFILLS[importee + '.js'];
       } 
 
     },
