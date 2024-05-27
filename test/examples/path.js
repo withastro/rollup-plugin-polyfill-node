@@ -1,9 +1,10 @@
 import {dirname, relative} from 'path';
+import {sep} from 'node:path';
 
 
 var basedir = '/';
 var importer = './src/es6/path.js';
-var out = dirname('/' + relative(basedir, importer));
+var out = dirname(sep + relative(basedir, importer));
 if (out === '/src/es6'){
   done();
 } else {
