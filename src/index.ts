@@ -42,6 +42,10 @@ export default function (opts: NodePolyfillsOptions = {}): Plugin {
       if (importee[0] == '\0' && /\?commonjs-\w+$/.test(importee)) {
         importee = importee.slice(1).replace(/\?commonjs-\w+$/, '');
       }
+      // Fix node: imports
+      if (importee.startsWith('node:')) {
+        importee = importee.replace('node:', '');
+      }
       if (importee === DIRNAME_PATH) {
         const id = getRandomId();
         dirs.set(id, dirname("/" + relative(basedir, importer!)));
@@ -73,7 +77,7 @@ export default function (opts: NodePolyfillsOptions = {}): Plugin {
       if (id.startsWith(PREFIX)) {
         const importee = id.substr(PREFIX_LENGTH).replace('.js', '');
         return mods.get(importee) || (POLYFILLS as any)[importee + '.js'];
-      } 
+      }
 
     },
     transform(code: string, id: string) {
