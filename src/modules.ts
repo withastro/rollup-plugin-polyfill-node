@@ -1,3 +1,4 @@
+import NOT_SHIMMED from './not-shimmed';
 import POLYFILLS from './polyfills';
 const EMPTY_PATH = POLYFILLS['empty.js'];
 
@@ -37,25 +38,16 @@ export function getModules() {
 
   // TODO: Decide if we want to implement these or not
   // currently causing trouble in tests
-  libs.set('fs', EMPTY_PATH);
-  libs.set('crypto', EMPTY_PATH);
   // libs.set('fs', POLYFILLS['browserify-fs.js']);
   // libs.set('crypto', POLYFILLS['crypto-browserify.js']);
 
   // TODO: No good polyfill exists yet
-  libs.set('http2', EMPTY_PATH);
-  
-  // not shimmed
-  libs.set('dns', EMPTY_PATH);
-  libs.set('dgram', EMPTY_PATH);
-  libs.set('child_process', EMPTY_PATH);
-  libs.set('cluster', EMPTY_PATH);
-  libs.set('module', EMPTY_PATH);
-  libs.set('net', EMPTY_PATH);
-  libs.set('readline', EMPTY_PATH);
-  libs.set('repl', EMPTY_PATH);
-  libs.set('tls', EMPTY_PATH);
-  libs.set('perf_hooks', EMPTY_PATH);
+  // libs.set('http2', EMPTY_PATH);
+
+  // Add modules that are not shimmed
+  for (const libName of NOT_SHIMMED) {
+    libs.set(libName, EMPTY_PATH);
+  }
 
   return libs;
 }
