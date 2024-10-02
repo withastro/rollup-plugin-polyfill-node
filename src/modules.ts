@@ -57,5 +57,16 @@ export function getModules() {
   libs.set('tls', EMPTY_PATH);
   libs.set('perf_hooks', EMPTY_PATH);
 
+  // Add support for "node:" prefixed module
+  for (const libName of [...libs.keys()]) {
+    libs.set(`node:${libName}`, libs.get(libName) as string);
+  }
+
+  // Built-in modules with mandatory node: prefix
+  // https://nodejs.org/api/modules.html#built-in-modules-with-mandatory-node-prefix
+  libs.set('node:sea', EMPTY_PATH);
+  libs.set('node:test', EMPTY_PATH);
+  libs.set('node:test/reporters', EMPTY_PATH);
+
   return libs;
 }
